@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jbittorrent.bencoding.Decoding.Intermediary;
 import jbittorrent.bencoding.Decoding.InvalidEncodingException;
 
 import org.junit.Test;

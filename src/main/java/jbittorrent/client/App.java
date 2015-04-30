@@ -1,15 +1,18 @@
 package jbittorrent.client;
 
 import java.io.File;
+import java.io.IOException;
 
 import jbittorrent.metainfo.Metainfo;
 
 public class App {
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     String filename = "test.torrent";
     File inputFile = new File(filename);
     Metainfo metainfo = Metainfo.fromFile(inputFile);
+    System.out.println("It is: ");
+    System.out.println(metainfo.announce);
   }
 
 }

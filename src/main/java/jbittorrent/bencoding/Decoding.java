@@ -39,7 +39,7 @@ public final class Decoding {
     return Intermediary.of(list, encoded.substring(1));
   }
 
-  static Intermediary<Map<String, Object>> readDictionary(String encoded) {
+  public static Intermediary<Map<String, Object>> readDictionary(String encoded) {
     Preconditions.checkArgument(encoded.charAt(0) == 'd');
     encoded = encoded.substring(1);
     Map<String, Object> dictionary = Maps.newHashMap();
@@ -67,25 +67,9 @@ public final class Decoding {
     }
   }
 
-  static class Intermediary<T> {
-    final T decodedValue;
-    final String encodedRemainder;
-
-    private Intermediary(T decodedValue, String encodedRemainder) {
-      this.decodedValue = decodedValue;
-      this.encodedRemainder = encodedRemainder;
-    }
-
-    public static <T> Intermediary<T> of(T decodedValue, String encodedRemainder) {
-      Preconditions.checkNotNull(decodedValue);
-      Preconditions.checkNotNull(encodedRemainder);
-      return new Intermediary<T>(decodedValue, encodedRemainder);
-    }
-  }
-  
   static class InvalidEncodingException extends RuntimeException {
     public InvalidEncodingException(String invalidString) {
       super(invalidString);
     }
-  }; 
+  };
 }
