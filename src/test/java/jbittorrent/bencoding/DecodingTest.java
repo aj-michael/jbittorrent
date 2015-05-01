@@ -55,13 +55,13 @@ public class DecodingTest {
     assertTrue(list.get(1) instanceof String);
     assertEquals("eggs", list.get(1));
   }
-  
+
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidReadList() {
     String encodedData = "4:spamd3:cow3:mooe";
     Decoding.readList(encodedData);
   }
-  
+
   @Test
   public void testSuccessfulReadDictionary() {
     String encodedData = "d3:cow3:moo4:spami45eei123e";
@@ -74,13 +74,13 @@ public class DecodingTest {
     assertEquals("moo", dictionary.get("cow"));
     assertEquals(45, dictionary.get("spam"));
   }
-  
+
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidReadDictionary() {
     String encodedData = "l4:spam4:eggsei3546e";
     Decoding.readDictionary(encodedData);
   }
-  
+
   @SuppressWarnings("unchecked")
   @Test
   public void testSuccessfulReadObject() {
@@ -94,7 +94,7 @@ public class DecodingTest {
     assertTrue(list.get(1) instanceof String);
     assertEquals("eggs", list.get(1));
   }
-  
+
   @Test(expected = InvalidEncodingException.class)
   public void testInvalidReadObject() {
     String encodedData = "adam";

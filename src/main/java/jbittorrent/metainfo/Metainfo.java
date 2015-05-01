@@ -17,7 +17,7 @@ import com.google.common.io.Files;
 
 public final class Metainfo {
 
-  final InfoDictionary info;
+  public final InfoDictionary info;
   public final String announce;
   final Optional<List<String>> announceList;
   final Optional<String> comment;
