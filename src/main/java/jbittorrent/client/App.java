@@ -11,11 +11,6 @@ public class App {
     String filename = "single.torrent";
     File inputFile = new File(filename);
     Metainfo metainfo = Metainfo.fromFile(inputFile);
-    System.out.println("It is: ");
-    System.out.println(metainfo.announce);
-    System.out.println(metainfo.info.getClass());
-    System.out.println(metainfo.info.pieceLength);
-    System.out.println(metainfo.info.privateBit);
   }
 
 }
