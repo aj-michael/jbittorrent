@@ -1,4 +1,4 @@
-package jbittorrent.tracker;
+package jbittorrent.tracker.udp;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,10 +6,11 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+
 import java.util.Random;
 
 import jbittorrent.metainfo.Metainfo;
+import jbittorrent.tracker.Tracker;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
@@ -26,18 +27,24 @@ import com.google.inject.Inject;
 
 public class UdpTracker extends UntypedActor implements Tracker {
 
+  static final int DEFAULT_IP_ADDRESS = 0;
+  static final int DEFAULT_NUM_WANT = -1;
+  static final int DEFAULT_KEY = 0;
+  
   final InetSocketAddress remote;
   volatile TrackerState state;
   final int connectTransactionId;
   final int announceTransactionId;
+  final int key;
   final byte[] infoHash;
   final byte[] peerId;
+  final short port;
   long downloaded = 0;
   long left = 0;
   long uploaded = 0;
   Optional<ActorRef> conn = Optional.<ActorRef>absent();
   Optional<Long> connectionId = Optional.<Long>absent();
-  
+
   enum TrackerState {
     INITIAL,
     CONNECTING,
@@ -45,16 +52,20 @@ public class UdpTracker extends UntypedActor implements Tracker {
     ANNOUNCING,
     ANNOUNCED
   }
-  
-  
+
   @Inject
-  public UdpTracker(InetSocketAddress remote) {
+  public UdpTracker(InetSocketAddress remote, byte[] peerId, byte[] infoHash, short port, Optional<Integer> key) {
     System.out.println("Was created");
+    this.infoHash = infoHash;
+    this.key = key.or(DEFAULT_KEY);
+    this.peerId = peerId;
+    this.port = port;
     this.remote = remote;
-    this.state = TrackerState.INITIAL;
+
     Random r = new Random();
     this.connectTransactionId = r.nextInt();
     this.announceTransactionId = r.nextInt();
+    this.state = TrackerState.INITIAL;
 
     final ActorRef mgr = UdpConnected.get(getContext().system()).getManager();
     mgr.tell(UdpConnectedMessage.connect(getSelf(),  remote), getSelf());
@@ -62,23 +73,20 @@ public class UdpTracker extends UntypedActor implements Tracker {
 
   @Override
   public void onReceive(Object msg) {
-
-    System.out.println("Received "+msg);
     conn = Optional.of(getSender());
     if (msg instanceof UdpConnected.Connected) {
       getContext().become(new UdpTrackerProcedure(this));
-      sendConnect();
+      connectRequest();
     }
   }
 
-  void sendConnect() {
+  void connectRequest() {
     Preconditions.checkArgument(conn.isPresent());
     int connectInputSize = 16;
     long connectionId = 0x41727101980L;
-    int action = 0;
     ByteBuffer buffer = ByteBuffer.allocate(connectInputSize)
         .putLong(connectionId)
-        .putInt(action)
+        .putInt(UdpHandshakeActions.CONNECT)
         .putInt(this.connectTransactionId);
     buffer.flip();
     ByteString byteString = ByteString.fromByteBuffer(buffer);
@@ -87,42 +95,34 @@ public class UdpTracker extends UntypedActor implements Tracker {
     this.state = TrackerState.CONNECTING;
   }
   
-  void receiveConnect(ByteBuffer data) {
+  void connectResponse(ByteBuffer data) {
     int action = data.getInt();
     int transactionId = data.getInt();
     long connectionId = data.getLong();
     Verify.verify(action == 0);
-    Verify.verify(connectionId == this.connectTransactionId);
+    Verify.verify(transactionId == this.connectTransactionId);
     this.connectionId = Optional.of(connectionId);
     this.state = TrackerState.CONNECTED;
-
-    System.out.println("======== Received =======");
-    System.out.println("action = "+action);
-    System.out.println("transactionId = "+transactionId);
-    System.out.println("connectionId = "+connectionId);
   }
   
-  void sendAnnounce() {
+  void announceRequest() {
     Preconditions.checkArgument(conn.isPresent());
   }
   
   ByteString announceInput() {
     Preconditions.checkArgument(connectionId.isPresent());
     int announceInputSize = 98;
-    int action = 1;
-    int ip = 0;
-    int numWant = -1;
     ByteBuffer buffer = ByteBuffer.allocate(announceInputSize)
         .putLong(connectionId.get())
-        .putInt(action)
+        .putInt(UdpHandshakeActions.ANNOUNCE)
         .putInt(announceTransactionId)
         .put(infoHash)
         .put(peerId)
         .putLong(uploaded)
-        .putInt(event)
-        .putInt(ip)
+        .putInt(UdpHandshakeEvents.NONE)
+        .putInt(DEFAULT_IP_ADDRESS)
         .putInt(key)
-        .putInt(numWant)
+        .putInt(DEFAULT_NUM_WANT)
         .putShort(port);
     buffer.flip();
     return ByteString.fromByteBuffer(buffer);
@@ -139,10 +139,8 @@ public class UdpTracker extends UntypedActor implements Tracker {
     int port = u.getPort();
     System.out.println("hostname = "+host);
     System.out.println("port = "+port);
-    
-    //short port = 1337;
+
     InetSocketAddress socket = new InetSocketAddress(host, port);
     system.actorOf(Props.create(UdpTracker.class, socket));
   }
-  
 }

@@ -1,6 +1,6 @@
-package jbittorrent.tracker;
+package jbittorrent.tracker.udp;
 
-import jbittorrent.tracker.UdpTracker.TrackerState;
+import jbittorrent.tracker.udp.UdpTracker.TrackerState;
 import akka.io.UdpConnected;
 import akka.japi.Procedure;
 import akka.util.ByteString;
@@ -18,7 +18,7 @@ class UdpTrackerProcedure implements Procedure<Object> {
     if (msg instanceof UdpConnected.Received) {
       ByteString data = ((UdpConnected.Received) msg).data();
       if (tracker.state == TrackerState.CONNECTING) {
-        tracker.receiveConnect(data.asByteBuffer());
+
       } else if (tracker.state == TrackerState.ANNOUNCING) {
         
       } else {
