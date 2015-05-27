@@ -6,9 +6,9 @@ import akka.japi.Procedure;
 import akka.util.ByteString;
 
 class UdpTrackerProcedure implements Procedure<Object> {
-  
+
   final UdpTracker tracker;
-  
+
   UdpTrackerProcedure(UdpTracker tracker) {
     this.tracker = tracker;
   }
@@ -20,7 +20,7 @@ class UdpTrackerProcedure implements Procedure<Object> {
       if (tracker.state == TrackerState.CONNECTING) {
 
       } else if (tracker.state == TrackerState.ANNOUNCING) {
-        
+
       } else {
         System.out.println("Undefined transition function for tracker state: " + tracker.state);
       }
